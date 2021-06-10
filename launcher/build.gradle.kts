@@ -27,7 +27,7 @@ tasks.register<JavaExec>("run") {
     val jarFile = project(":language").tasks.named("jar")
     dependsOn(jarFile)
     workingDir(rootProject.projectDir)
-//    executable("/usr/lib/jvm/java-16-graalvm/bin/java")
+    executable("/usr/lib/jvm/java-16-graalvm/bin/java")
     mainClass.set(mainClassValue)
     modularity.inferModulePath.set(true)
     classpath(

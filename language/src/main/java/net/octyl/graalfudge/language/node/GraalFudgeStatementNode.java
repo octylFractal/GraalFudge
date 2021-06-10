@@ -20,11 +20,18 @@ package net.octyl.graalfudge.language.node;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.GenerateWrapper;
+import com.oracle.truffle.api.instrumentation.InstrumentableNode;
+import com.oracle.truffle.api.instrumentation.ProbeNode;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.Node;
 import net.octyl.graalfudge.language.GraalFudgeContext;
 import net.octyl.graalfudge.language.GraalFudgeLanguage;
 
-public abstract class GraalFudgeStatementNode extends Node {
+@GenerateWrapper
+public abstract class GraalFudgeStatementNode extends Node implements InstrumentableNode {
     @CompilerDirectives.CompilationFinal
     private TruffleLanguage.ContextReference<GraalFudgeContext> context;
 
@@ -36,5 +43,23 @@ public abstract class GraalFudgeStatementNode extends Node {
         return context.get();
     }
 
-    public abstract void execute();
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        if (tag == StandardTags.ExpressionTag.class || tag == StandardTags.StatementTag.class) {
+            return true;
+        }
+        return InstrumentableNode.super.hasTag(tag);
+    }
+
+    @Override
+    public boolean isInstrumentable() {
+        return true;
+    }
+
+    @Override
+    public WrapperNode createWrapper(ProbeNode probeNode) {
+        return new GraalFudgeStatementNodeWrapper(this, probeNode);
+    }
+
+    public abstract void execute(VirtualFrame frame);
 }

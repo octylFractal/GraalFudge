@@ -18,21 +18,35 @@
 
 package net.octyl.graalfudge.language.node;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
+
 /**
  * A "group" of statements -- Brainf*** doesn't have blocks.
  */
 public class GraalFudgeGroupNode extends GraalFudgeStatementNode {
+    private final boolean isRootTag;
     @Children
     private final GraalFudgeStatementNode[] statementNodes;
 
-    public GraalFudgeGroupNode(GraalFudgeStatementNode[] statementNodes) {
+    public GraalFudgeGroupNode(boolean isRootTag, GraalFudgeStatementNode[] statementNodes) {
+        this.isRootTag = isRootTag;
         this.statementNodes = statementNodes;
     }
 
     @Override
-    public void execute() {
+    public boolean hasTag(Class<? extends Tag> tag) {
+        if (isRootTag && (tag == StandardTags.RootTag.class || tag == StandardTags.RootBodyTag.class)) {
+            return true;
+        }
+        return super.hasTag(tag);
+    }
+
+    @Override
+    public void execute(VirtualFrame frame) {
         for (var statementNode : statementNodes) {
-            statementNode.execute();
+            statementNode.execute(frame);
         }
     }
 }

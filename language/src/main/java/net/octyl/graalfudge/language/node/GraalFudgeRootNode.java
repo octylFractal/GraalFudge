@@ -36,7 +36,7 @@ public class GraalFudgeRootNode extends RootNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        groupNode.execute();
+        groupNode.execute(frame);
         return GraalFudgeNull.SINGLETON;
     }
 }

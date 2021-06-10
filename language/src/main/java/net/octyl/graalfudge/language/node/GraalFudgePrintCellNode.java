@@ -19,6 +19,7 @@
 package net.octyl.graalfudge.language.node;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import net.octyl.graalfudge.language.GraalFudgeContext;
 
@@ -28,7 +29,7 @@ import java.io.UncheckedIOException;
 @NodeInfo(shortName = "printCell")
 public class GraalFudgePrintCellNode extends GraalFudgeBuiltInNode {
     @Override
-    public void execute() {
+    public void execute(VirtualFrame frame) {
         var context = useContext();
         byte b = context.tape().readCell();
         writeToOutput(context, b);

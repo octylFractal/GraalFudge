@@ -18,12 +18,13 @@
 
 package net.octyl.graalfudge.language.node;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 @NodeInfo(shortName = "prevCell")
 public class GraalFudgePrevCellNode extends GraalFudgeBuiltInNode {
     @Override
-    public void execute() {
+    public void execute(VirtualFrame frame) {
         useContext().tape().prevCell();
     }
 }

@@ -40,9 +40,7 @@ import java.io.UncheckedIOException;
     StandardTags.RootTag.class,
     StandardTags.RootBodyTag.class,
     StandardTags.StatementTag.class,
-    StandardTags.ExpressionTag.class,
-    StandardTags.ReadVariableTag.class,
-    StandardTags.WriteVariableTag.class
+    StandardTags.ExpressionTag.class
 })
 public class GraalFudgeLanguage extends TruffleLanguage<GraalFudgeContext> {
     public static final String ID = "graalfudge";

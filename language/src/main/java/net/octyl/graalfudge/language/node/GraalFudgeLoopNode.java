@@ -18,6 +18,7 @@
 
 package net.octyl.graalfudge.language.node;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 
@@ -32,10 +33,10 @@ public class GraalFudgeLoopNode extends GraalFudgeStatementNode {
     }
 
     @Override
-    public void execute() {
+    public void execute(VirtualFrame frame) {
         var tape = useContext().tape();
         while (loopProfile.profile(tape.readCell() != 0)) {
-            bodyNode.execute();
+            bodyNode.execute(frame);
         }
     }
 }

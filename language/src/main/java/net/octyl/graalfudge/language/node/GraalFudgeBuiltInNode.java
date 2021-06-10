@@ -18,5 +18,8 @@
 
 package net.octyl.graalfudge.language.node;
 
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
+
 public abstract class GraalFudgeBuiltInNode extends GraalFudgeStatementNode {
 }

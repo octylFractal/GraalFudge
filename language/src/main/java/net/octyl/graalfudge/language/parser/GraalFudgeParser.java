@@ -68,7 +68,7 @@ public class GraalFudgeParser {
                     }
                     groupNodeStack.getLast().add(
                         new GraalFudgeLoopNode(new GraalFudgeGroupNode(
-                            loopBody.toArray(new GraalFudgeStatementNode[0])
+                            false, loopBody.toArray(new GraalFudgeStatementNode[0])
                         ))
                     );
                 }
@@ -79,7 +79,7 @@ public class GraalFudgeParser {
         }
         var rootNode = new GraalFudgeRootNode(
             language,
-            new GraalFudgeGroupNode(groupNodeStack.removeLast().toArray(new GraalFudgeStatementNode[0]))
+            new GraalFudgeGroupNode(true, groupNodeStack.removeLast().toArray(new GraalFudgeStatementNode[0]))
         );
         if (!groupNodeStack.isEmpty()) {
             throw new IllegalStateException("Missing ']' bracket");

@@ -19,6 +19,7 @@
 package net.octyl.graalfudge.language.node;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import net.octyl.graalfudge.language.GraalFudgeContext;
@@ -31,7 +32,7 @@ public class GraalFudgeReadCellNode extends GraalFudgeBuiltInNode {
     private final BranchProfile endOfFile = BranchProfile.create();
 
     @Override
-    public void execute() {
+    public void execute(VirtualFrame frame) {
         var context = useContext();
         int next = readFromInput(context);
         if (next == -1) {
