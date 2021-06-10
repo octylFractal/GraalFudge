@@ -48,7 +48,8 @@ public class GraalFudgeParser {
 
     public GraalFudgeRootNode parse() {
         var text = source.getCharacters();
-        var tape = new InfiniteTape(new FrameDescriptor());
+        var frameDescriptor = new FrameDescriptor();
+        var tape = new InfiniteTape(frameDescriptor);
         record ProtoGroupNode(int start, List<GraalFudgeStatementNode> children) {
         }
         var groupNodeStack = new ArrayDeque<ProtoGroupNode>();
@@ -111,6 +112,8 @@ public class GraalFudgeParser {
         int endOfAllStatements = statements[statements.length - 1].getSourceSection().getCharEndIndex();
         var rootNode = new GraalFudgeRootNode(
             language,
+            frameDescriptor,
+            tape,
             new GraalFudgeGroupNode(
                 source.createSection(startOfAllStatements, endOfAllStatements - startOfAllStatements),
                 true,

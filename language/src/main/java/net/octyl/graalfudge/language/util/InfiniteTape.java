@@ -18,9 +18,7 @@
 
 package net.octyl.graalfudge.language.util;
 
-import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -30,41 +28,33 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import java.util.Arrays;
 
 public class InfiniteTape {
-    private final FrameDescriptor frameDescriptor;
-    @CompilerDirectives.CompilationFinal(dimensions = 1)
-    private FrameSlot[] slots;
+    private final FrameSlot bufferPointer;
     private final FrameSlot dataPointer;
-    @CompilerDirectives.CompilationFinal
-    private Assumption slotsUnmodified = Truffle.getRuntime().createAssumption("slotsUnmodified");
 
     public InfiniteTape(FrameDescriptor frameDescriptor) {
-        this.frameDescriptor = frameDescriptor;
-        this.slots = new FrameSlot[1_024];
-        for (int i = 0; i < this.slots.length; i++) {
-            this.slots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Byte);
-        }
+        this.bufferPointer = frameDescriptor.addFrameSlot("bufferPointer", FrameSlotKind.Object);
         this.dataPointer = frameDescriptor.addFrameSlot("dataPointer", FrameSlotKind.Int);
     }
 
-
-    private void reallocateBuffer(int minSize) {
-        int oldSize = slots.length;
-        int newSize = Math.max(minSize, slots.length * 3 / 2);
-        this.slots = Arrays.copyOf(this.slots, newSize);
-        for (int i = oldSize; i < newSize; i++) {
-            this.slots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Byte);
-        }
-        if (oldSize != newSize) {
-            slotsUnmodified.invalidate("Slots were reallocated");
-            // Re-create assumption for newly compiled code
-            this.slotsUnmodified = Truffle.getRuntime().createAssumption("slotsUnmodified");
-        }
+    private void reallocateBuffer(VirtualFrame frame, int minSize) {
+        byte[] buffer = buffer(frame);
+        int newSize = Math.max(minSize, buffer.length * 3 / 2);
+        buffer = Arrays.copyOf(buffer, newSize);
+        frame.setObject(bufferPointer, buffer);
     }
 
-    private void checkSlotsUnmodified() {
-        if (!slotsUnmodified.isValid()) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+    private byte[] buffer(VirtualFrame frame) {
+        byte[] buffer;
+        try {
+            buffer = (byte[]) frame.getObject(bufferPointer);
+        } catch (FrameSlotTypeException e) {
+            throw new AssertionError("Expected object slot", e);
         }
+        if (buffer == null) {
+            buffer = new byte[1_024];
+            frame.setObject(bufferPointer, buffer);
+        }
+        return buffer;
     }
 
     private int dataPointer(VirtualFrame frame) {
@@ -75,33 +65,25 @@ public class InfiniteTape {
         }
     }
 
-    private byte getByteUnchecked(VirtualFrame frame, FrameSlot slot) {
-        try {
-            return frame.getByte(slot);
-        } catch (FrameSlotTypeException e) {
-            throw new AssertionError("Expected byte slot", e);
-        }
+    public void initialize(VirtualFrame frame) {
+        frame.setObject(bufferPointer, new byte[1024]);
+        frame.setInt(dataPointer, 0);
     }
 
     public void incrementCell(VirtualFrame frame) {
-        checkSlotsUnmodified();
-        var slot = slots[dataPointer(frame)];
-        frame.setByte(slot, (byte) (getByteUnchecked(frame, slot) + 1));
+        buffer(frame)[dataPointer(frame)]++;
     }
 
     public void decrementCell(VirtualFrame frame) {
-        checkSlotsUnmodified();
-        var slot = slots[dataPointer(frame)];
-        frame.setByte(slot, (byte) (getByteUnchecked(frame, slot) - 1));
+        buffer(frame)[dataPointer(frame)]--;
     }
 
     public void nextCell(VirtualFrame frame) {
         int value = dataPointer(frame) + 1;
         frame.setInt(dataPointer, value);
-        checkSlotsUnmodified();
-        if (value >= slots.length) {
+        if (value >= buffer(frame).length) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            reallocateBuffer(value);
+            reallocateBuffer(frame, value);
         }
     }
 
@@ -114,12 +96,10 @@ public class InfiniteTape {
     }
 
     public void writeCell(VirtualFrame frame, byte value) {
-        checkSlotsUnmodified();
-        frame.setByte(slots[dataPointer(frame)], value);
+        buffer(frame)[dataPointer(frame)] = value;
     }
 
     public byte readCell(VirtualFrame frame) {
-        checkSlotsUnmodified();
-        return getByteUnchecked(frame, slots[dataPointer(frame)]);
+        return buffer(frame)[dataPointer(frame)];
     }
 }
