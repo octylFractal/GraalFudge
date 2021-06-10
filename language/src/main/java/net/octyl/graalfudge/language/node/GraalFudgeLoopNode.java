@@ -18,25 +18,60 @@
 
 package net.octyl.graalfudge.language.node;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.LoopNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.api.source.SourceSection;
+import net.octyl.graalfudge.language.GraalFudgeContext;
+import net.octyl.graalfudge.language.GraalFudgeLanguage;
 
 @NodeInfo(shortName = "loop")
 public class GraalFudgeLoopNode extends GraalFudgeStatementNode {
-    private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
     @Child
-    private GraalFudgeGroupNode bodyNode;
+    private LoopNode loopNode;
 
-    public GraalFudgeLoopNode(GraalFudgeGroupNode bodyNode) {
-        this.bodyNode = bodyNode;
+    public GraalFudgeLoopNode(SourceSection sourceSection, GraalFudgeGroupNode bodyNode) {
+        super(sourceSection);
+        this.loopNode = Truffle.getRuntime().createLoopNode(new GraalFudgeLoopNodeInternal(bodyNode));
     }
 
     @Override
     public void execute(VirtualFrame frame) {
-        var tape = useContext().tape();
-        while (loopProfile.profile(tape.readCell() != 0)) {
+        loopNode.execute(frame);
+    }
+
+    private static final class GraalFudgeLoopNodeInternal extends Node implements RepeatingNode {
+        private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
+        @Child
+        private GraalFudgeGroupNode bodyNode;
+        @CompilerDirectives.CompilationFinal
+        private TruffleLanguage.ContextReference<GraalFudgeContext> context;
+
+        private GraalFudgeLoopNodeInternal(GraalFudgeGroupNode bodyNode) {
+            this.bodyNode = bodyNode;
+        }
+
+        protected GraalFudgeContext useContext() {
+            if (context == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                context = lookupContextReference(GraalFudgeLanguage.class);
+            }
+            return context.get();
+        }
+
+        @Override
+        public boolean executeRepeating(VirtualFrame frame) {
+            if (loopProfile.profile(useContext().tape().readCell() == 0)) {
+                return false;
+            }
             bodyNode.execute(frame);
+            return true;
         }
     }
 }

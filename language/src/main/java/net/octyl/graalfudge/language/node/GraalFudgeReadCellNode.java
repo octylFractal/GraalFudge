@@ -22,6 +22,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.source.SourceSection;
 import net.octyl.graalfudge.language.GraalFudgeContext;
 
 import java.io.IOException;
@@ -30,6 +31,10 @@ import java.io.UncheckedIOException;
 @NodeInfo(shortName = "readCell")
 public class GraalFudgeReadCellNode extends GraalFudgeBuiltInNode {
     private final BranchProfile endOfFile = BranchProfile.create();
+
+    public GraalFudgeReadCellNode(SourceSection sourceSection) {
+        super(sourceSection);
+    }
 
     @Override
     public void execute(VirtualFrame frame) {

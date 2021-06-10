@@ -23,6 +23,7 @@ import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
+import com.oracle.truffle.api.source.SourceSection;
 
 /**
  * A "group" of statements -- Brainf*** doesn't have blocks.
@@ -33,13 +34,15 @@ public class GraalFudgeGroupNode extends GraalFudgeStatementNode {
     @Children
     private final GraalFudgeStatementNode[] statementNodes;
 
-    public GraalFudgeGroupNode(boolean isRootTag, GraalFudgeStatementNode[] statementNodes) {
+    public GraalFudgeGroupNode(SourceSection sourceSection, boolean isRootTag,
+                               GraalFudgeStatementNode[] statementNodes) {
+        super(sourceSection);
         this.isRootTag = isRootTag;
         this.statementNodes = statementNodes;
     }
 
     public GraalFudgeGroupNode(GraalFudgeGroupNode node) {
-        this(node.isRootTag, node.statementNodes);
+        this(node.getSourceSection(), node.isRootTag, node.statementNodes);
     }
 
     @Override
@@ -58,7 +61,7 @@ public class GraalFudgeGroupNode extends GraalFudgeStatementNode {
     @Override
     public void execute(VirtualFrame frame) {
         for (var statementNode : statementNodes) {
-            statementNode.execute(frame);
+            statementNode.execute(frame.materialize());
         }
     }
 }

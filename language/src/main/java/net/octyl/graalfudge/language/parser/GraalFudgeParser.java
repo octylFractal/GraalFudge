@@ -46,30 +46,56 @@ public class GraalFudgeParser {
 
     public GraalFudgeRootNode parse() {
         var text = source.getCharacters();
-        // stack of group nodes, represented as a list of statements
-        var groupNodeStack = new ArrayDeque<List<GraalFudgeStatementNode>>();
-        groupNodeStack.addLast(new ArrayList<>());
+        record ProtoGroupNode(int start, List<GraalFudgeStatementNode> children) {
+        }
+        var groupNodeStack = new ArrayDeque<ProtoGroupNode>();
+        groupNodeStack.addLast(new ProtoGroupNode(0, new ArrayList<>()));
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
             switch (c) {
-                case '>' -> groupNodeStack.getLast().add(new GraalFudgeNextCellNode());
-                case '<' -> groupNodeStack.getLast().add(new GraalFudgePrevCellNode());
-                case '+' -> groupNodeStack.getLast().add(new GraalFudgeIncrementCellNode());
-                case '-' -> groupNodeStack.getLast().add(new GraalFudgeDecrementCellNode());
-                case '.' -> groupNodeStack.getLast().add(new GraalFudgePrintCellNode());
-                case ',' -> groupNodeStack.getLast().add(new GraalFudgeReadCellNode());
+                case '>' -> groupNodeStack.getLast().children.add(new GraalFudgeNextCellNode(
+                    source.createSection(i, 1)
+                ));
+                case '<' -> groupNodeStack.getLast().children.add(new GraalFudgePrevCellNode(
+                    source.createSection(i, 1)
+                ));
+                case '+' -> groupNodeStack.getLast().children.add(new GraalFudgeIncrementCellNode(
+                    source.createSection(i, 1)
+                ));
+                case '-' -> groupNodeStack.getLast().children.add(new GraalFudgeDecrementCellNode(
+                    source.createSection(i, 1)
+                ));
+                case '.' -> groupNodeStack.getLast().children.add(new GraalFudgePrintCellNode(
+                    source.createSection(i, 1)
+                ));
+                case ',' -> groupNodeStack.getLast().children.add(new GraalFudgeReadCellNode(
+                    source.createSection(i, 1)
+                ));
                 // push onto stack
-                case '[' -> groupNodeStack.addLast(new ArrayList<>());
+                case '[' -> groupNodeStack.addLast(new ProtoGroupNode(
+                    i, new ArrayList<>()
+                ));
                 // pop off stack, add new loop node
                 case ']' -> {
                     var loopBody = groupNodeStack.removeLast();
                     if (groupNodeStack.isEmpty()) {
                         throw new IllegalStateException("Missing '[' bracket");
                     }
-                    groupNodeStack.getLast().add(
-                        new GraalFudgeLoopNode(new GraalFudgeGroupNode(
-                            false, loopBody.toArray(new GraalFudgeStatementNode[0])
-                        ))
+                    var loopSourceSection = source.createSection(
+                        loopBody.start, i - loopBody.start + 1
+                    );
+                    var loopBodySourceSection = source.createSection(
+                        loopBody.start + 1, Math.max(i - loopBody.start - 1, 0)
+                    );
+                    groupNodeStack.getLast().children.add(
+                        new GraalFudgeLoopNode(
+                            loopSourceSection,
+                            new GraalFudgeGroupNode(
+                                loopBodySourceSection,
+                                false,
+                                loopBody.children.toArray(new GraalFudgeStatementNode[0])
+                            )
+                        )
                     );
                 }
                 default -> {
@@ -77,9 +103,16 @@ public class GraalFudgeParser {
                 }
             }
         }
+        var statements = groupNodeStack.removeLast().children.toArray(new GraalFudgeStatementNode[0]);
+        int startOfAllStatements = statements[0].getSourceSection().getCharIndex();
+        int endOfAllStatements = statements[statements.length - 1].getSourceSection().getCharEndIndex();
         var rootNode = new GraalFudgeRootNode(
             language,
-            new GraalFudgeGroupNode(true, groupNodeStack.removeLast().toArray(new GraalFudgeStatementNode[0]))
+            new GraalFudgeGroupNode(
+                source.createSection(startOfAllStatements, endOfAllStatements - startOfAllStatements),
+                true,
+                statements
+            )
         );
         if (!groupNodeStack.isEmpty()) {
             throw new IllegalStateException("Missing ']' bracket");

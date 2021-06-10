@@ -41,6 +41,8 @@ tasks.register<JavaExec>("run") {
             "-XX:+UnlockExperimentalVMOptions",
             "-XX:+EnableJVMCI",
             "-XX:+UseJVMCICompiler",
+            "-Dgraal.Dump=Truffle:1",
+            "-Dgraal.PrintGraph=Network",
             "-Dtruffle.class.path.append=${jarFile.get().outputs.files.singleFile}"
         )
     })

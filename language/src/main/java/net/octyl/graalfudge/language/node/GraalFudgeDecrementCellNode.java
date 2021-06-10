@@ -20,9 +20,14 @@ package net.octyl.graalfudge.language.node;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.source.SourceSection;
 
 @NodeInfo(shortName = "decrementCell")
 public class GraalFudgeDecrementCellNode extends GraalFudgeBuiltInNode {
+    public GraalFudgeDecrementCellNode(SourceSection sourceSection) {
+        super(sourceSection);
+    }
+
     @Override
     public void execute(VirtualFrame frame) {
         useContext().tape().decrementCell();

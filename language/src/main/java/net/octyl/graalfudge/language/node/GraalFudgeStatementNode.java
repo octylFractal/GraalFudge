@@ -27,15 +27,19 @@ import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import net.octyl.graalfudge.language.GraalFudgeContext;
 import net.octyl.graalfudge.language.GraalFudgeLanguage;
 
 @GenerateWrapper
 public abstract class GraalFudgeStatementNode extends Node implements InstrumentableNode {
+    private final SourceSection sourceSection;
     @CompilerDirectives.CompilationFinal
     private TruffleLanguage.ContextReference<GraalFudgeContext> context;
+
+    protected GraalFudgeStatementNode(SourceSection sourceSection) {
+        this.sourceSection = sourceSection;
+    }
 
     protected GraalFudgeContext useContext() {
         if (context == null) {
@@ -60,12 +64,12 @@ public abstract class GraalFudgeStatementNode extends Node implements Instrument
 
     @Override
     public WrapperNode createWrapper(ProbeNode probeNode) {
-        return new GraalFudgeStatementNodeWrapper(this, probeNode);
+        return new GraalFudgeStatementNodeWrapper(this.sourceSection, this, probeNode);
     }
 
     @Override
     public SourceSection getSourceSection() {
-        return Source.newBuilder(GraalFudgeLanguage.ID, "", "<empty>").build().createSection(1);
+        return this.sourceSection;
     }
 
     public abstract void execute(VirtualFrame frame);

@@ -53,6 +53,9 @@ public class GraalFudgeLauncher implements Callable<Integer> {
     @CommandLine.Option(names = {"-p", "--profile"}, description = "Time the execution of the program")
     private boolean profile;
 
+    @CommandLine.Option(names = {"--experimental-options"}, description = "Allow Graal experimental options")
+    private boolean experimentalOptions;
+
     @CommandLine.Parameters(index = "1..*", description = "Parameters for Graal")
     private List<String> remainingParams;
 
@@ -71,6 +74,7 @@ public class GraalFudgeLauncher implements Callable<Integer> {
         try (var ctx = Context.newBuilder(LANG_ID)
             .in(System.in)
             .out(System.out)
+            .allowExperimentalOptions(experimentalOptions)
             .options(options)
             .build()) {
             long startTime = 0L;
