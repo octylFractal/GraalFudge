@@ -23,27 +23,28 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
 import net.octyl.graalfudge.language.GraalFudgeContext;
+import net.octyl.graalfudge.language.util.InfiniteTape;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
 
 @NodeInfo(shortName = "printCell")
 public class GraalFudgePrintCellNode extends GraalFudgeBuiltInNode {
-    public GraalFudgePrintCellNode(SourceSection sourceSection) {
-        super(sourceSection);
+    public GraalFudgePrintCellNode(SourceSection sourceSection, InfiniteTape tape) {
+        super(sourceSection, tape);
     }
 
     @Override
     public void execute(VirtualFrame frame) {
-        var context = useContext();
-        byte b = context.tape().readCell();
-        writeToOutput(context, b);
+        byte b = tape.readCell(frame);
+        writeToOutput(useContext().output(), b);
     }
 
     @CompilerDirectives.TruffleBoundary
-    private void writeToOutput(GraalFudgeContext context, byte b) {
+    private void writeToOutput(OutputStream stream, byte b) {
         try {
-            context.output().write(b);
+            stream.write(b);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

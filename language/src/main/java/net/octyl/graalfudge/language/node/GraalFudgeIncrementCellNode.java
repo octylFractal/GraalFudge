@@ -21,15 +21,16 @@ package net.octyl.graalfudge.language.node;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
+import net.octyl.graalfudge.language.util.InfiniteTape;
 
 @NodeInfo(shortName = "incrementCell")
 public class GraalFudgeIncrementCellNode extends GraalFudgeBuiltInNode {
-    public GraalFudgeIncrementCellNode(SourceSection sourceSection) {
-        super(sourceSection);
+    public GraalFudgeIncrementCellNode(SourceSection sourceSection, InfiniteTape tape) {
+        super(sourceSection, tape);
     }
 
     @Override
     public void execute(VirtualFrame frame) {
-        useContext().tape().incrementCell();
+        tape.incrementCell(frame);
     }
 }

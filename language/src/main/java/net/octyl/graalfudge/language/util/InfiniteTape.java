@@ -18,44 +18,108 @@
 
 package net.octyl.graalfudge.language.util;
 
+import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.VirtualFrame;
+
 import java.util.Arrays;
 
 public class InfiniteTape {
-    private byte[] buffer = new byte[1_024];
-    private int dataPointer = 0;
+    private final FrameDescriptor frameDescriptor;
+    @CompilerDirectives.CompilationFinal(dimensions = 1)
+    private FrameSlot[] slots;
+    private final FrameSlot dataPointer;
+    @CompilerDirectives.CompilationFinal
+    private Assumption slotsUnmodified = Truffle.getRuntime().createAssumption("slotsUnmodified");
+
+    public InfiniteTape(FrameDescriptor frameDescriptor) {
+        this.frameDescriptor = frameDescriptor;
+        this.slots = new FrameSlot[1_024];
+        for (int i = 0; i < this.slots.length; i++) {
+            this.slots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Byte);
+        }
+        this.dataPointer = frameDescriptor.addFrameSlot("dataPointer", FrameSlotKind.Int);
+    }
+
 
     private void reallocateBuffer(int minSize) {
-        int newSize = Math.max(minSize, buffer.length * 3 / 2);
-        this.buffer = Arrays.copyOf(this.buffer, newSize);
-    }
-
-    public void incrementCell() {
-        buffer[dataPointer]++;
-    }
-
-    public void decrementCell() {
-        buffer[dataPointer]--;
-    }
-
-    public void nextCell() {
-        dataPointer++;
-        if (dataPointer >= buffer.length) {
-            reallocateBuffer(dataPointer);
+        int oldSize = slots.length;
+        int newSize = Math.max(minSize, slots.length * 3 / 2);
+        this.slots = Arrays.copyOf(this.slots, newSize);
+        for (int i = oldSize; i < newSize; i++) {
+            this.slots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Byte);
+        }
+        if (oldSize != newSize) {
+            slotsUnmodified.invalidate("Slots were reallocated");
+            // Re-create assumption for newly compiled code
+            this.slotsUnmodified = Truffle.getRuntime().createAssumption("slotsUnmodified");
         }
     }
 
-    public void prevCell() {
-        dataPointer--;
-        if (dataPointer < 0) {
+    private void checkSlotsUnmodified() {
+        if (!slotsUnmodified.isValid()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+        }
+    }
+
+    private int dataPointer(VirtualFrame frame) {
+        try {
+            return frame.getInt(dataPointer);
+        } catch (FrameSlotTypeException e) {
+            throw new AssertionError("Expected int slot", e);
+        }
+    }
+
+    private byte getByteUnchecked(VirtualFrame frame, FrameSlot slot) {
+        try {
+            return frame.getByte(slot);
+        } catch (FrameSlotTypeException e) {
+            throw new AssertionError("Expected byte slot", e);
+        }
+    }
+
+    public void incrementCell(VirtualFrame frame) {
+        checkSlotsUnmodified();
+        var slot = slots[dataPointer(frame)];
+        frame.setByte(slot, (byte) (getByteUnchecked(frame, slot) + 1));
+    }
+
+    public void decrementCell(VirtualFrame frame) {
+        checkSlotsUnmodified();
+        var slot = slots[dataPointer(frame)];
+        frame.setByte(slot, (byte) (getByteUnchecked(frame, slot) - 1));
+    }
+
+    public void nextCell(VirtualFrame frame) {
+        int value = dataPointer(frame) + 1;
+        frame.setInt(dataPointer, value);
+        checkSlotsUnmodified();
+        if (value >= slots.length) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            reallocateBuffer(value);
+        }
+    }
+
+    public void prevCell(VirtualFrame frame) {
+        int value = dataPointer(frame) - 1;
+        frame.setInt(dataPointer, value);
+        if (value < 0) {
             throw new IllegalStateException("Data pointer moved below 0");
         }
     }
 
-    public void writeCell(byte value) {
-        buffer[dataPointer] = value;
+    public void writeCell(VirtualFrame frame, byte value) {
+        checkSlotsUnmodified();
+        frame.setByte(slots[dataPointer(frame)], value);
     }
 
-    public byte readCell() {
-        return buffer[dataPointer];
+    public byte readCell(VirtualFrame frame) {
+        checkSlotsUnmodified();
+        return getByteUnchecked(frame, slots[dataPointer(frame)]);
     }
 }

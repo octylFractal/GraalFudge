@@ -19,7 +19,6 @@
 package net.octyl.graalfudge.language;
 
 import com.oracle.truffle.api.TruffleLanguage;
-import net.octyl.graalfudge.language.util.InfiniteTape;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -29,15 +28,13 @@ import java.io.OutputStream;
 public record GraalFudgeContext(
     GraalFudgeLanguage language,
     InputStream input,
-    OutputStream output,
-    InfiniteTape tape
+    OutputStream output
 ) {
     public GraalFudgeContext(GraalFudgeLanguage language, TruffleLanguage.Env env) {
         this(
             language,
             new BufferedInputStream(env.in()),
-            new BufferedOutputStream(env.out()),
-            new InfiniteTape()
+            new BufferedOutputStream(env.out())
         );
     }
 }

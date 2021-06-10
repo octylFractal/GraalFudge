@@ -18,10 +18,16 @@
 
 package net.octyl.graalfudge.language.node;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.source.SourceSection;
+import net.octyl.graalfudge.language.util.InfiniteTape;
 
 public abstract class GraalFudgeBuiltInNode extends GraalFudgeStatementNode {
-    public GraalFudgeBuiltInNode(SourceSection sourceSection) {
+    @CompilerDirectives.CompilationFinal
+    protected InfiniteTape tape;
+
+    public GraalFudgeBuiltInNode(SourceSection sourceSection, InfiniteTape tape) {
         super(sourceSection);
+        this.tape = tape;
     }
 }

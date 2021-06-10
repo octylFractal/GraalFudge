@@ -18,6 +18,7 @@
 
 package net.octyl.graalfudge.language.parser;
 
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.source.Source;
 import net.octyl.graalfudge.language.GraalFudgeLanguage;
 import net.octyl.graalfudge.language.node.GraalFudgeDecrementCellNode;
@@ -30,6 +31,7 @@ import net.octyl.graalfudge.language.node.GraalFudgePrintCellNode;
 import net.octyl.graalfudge.language.node.GraalFudgeReadCellNode;
 import net.octyl.graalfudge.language.node.GraalFudgeRootNode;
 import net.octyl.graalfudge.language.node.GraalFudgeStatementNode;
+import net.octyl.graalfudge.language.util.InfiniteTape;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -46,6 +48,7 @@ public class GraalFudgeParser {
 
     public GraalFudgeRootNode parse() {
         var text = source.getCharacters();
+        var tape = new InfiniteTape(new FrameDescriptor());
         record ProtoGroupNode(int start, List<GraalFudgeStatementNode> children) {
         }
         var groupNodeStack = new ArrayDeque<ProtoGroupNode>();
@@ -54,22 +57,22 @@ public class GraalFudgeParser {
             char c = text.charAt(i);
             switch (c) {
                 case '>' -> groupNodeStack.getLast().children.add(new GraalFudgeNextCellNode(
-                    source.createSection(i, 1)
+                    source.createSection(i, 1), tape
                 ));
                 case '<' -> groupNodeStack.getLast().children.add(new GraalFudgePrevCellNode(
-                    source.createSection(i, 1)
+                    source.createSection(i, 1), tape
                 ));
                 case '+' -> groupNodeStack.getLast().children.add(new GraalFudgeIncrementCellNode(
-                    source.createSection(i, 1)
+                    source.createSection(i, 1), tape
                 ));
                 case '-' -> groupNodeStack.getLast().children.add(new GraalFudgeDecrementCellNode(
-                    source.createSection(i, 1)
+                    source.createSection(i, 1), tape
                 ));
                 case '.' -> groupNodeStack.getLast().children.add(new GraalFudgePrintCellNode(
-                    source.createSection(i, 1)
+                    source.createSection(i, 1), tape
                 ));
                 case ',' -> groupNodeStack.getLast().children.add(new GraalFudgeReadCellNode(
-                    source.createSection(i, 1)
+                    source.createSection(i, 1), tape
                 ));
                 // push onto stack
                 case '[' -> groupNodeStack.addLast(new ProtoGroupNode(
@@ -89,7 +92,7 @@ public class GraalFudgeParser {
                     );
                     groupNodeStack.getLast().children.add(
                         new GraalFudgeLoopNode(
-                            loopSourceSection,
+                            loopSourceSection, tape,
                             new GraalFudgeGroupNode(
                                 loopBodySourceSection,
                                 false,

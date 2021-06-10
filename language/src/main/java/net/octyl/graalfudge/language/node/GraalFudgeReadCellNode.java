@@ -23,34 +23,34 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.source.SourceSection;
-import net.octyl.graalfudge.language.GraalFudgeContext;
+import net.octyl.graalfudge.language.util.InfiniteTape;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 
 @NodeInfo(shortName = "readCell")
 public class GraalFudgeReadCellNode extends GraalFudgeBuiltInNode {
     private final BranchProfile endOfFile = BranchProfile.create();
 
-    public GraalFudgeReadCellNode(SourceSection sourceSection) {
-        super(sourceSection);
+    public GraalFudgeReadCellNode(SourceSection sourceSection, InfiniteTape tape) {
+        super(sourceSection, tape);
     }
 
     @Override
     public void execute(VirtualFrame frame) {
-        var context = useContext();
-        int next = readFromInput(context);
+        int next = readFromInput(useContext().input());
         if (next == -1) {
             endOfFile.enter();
             return;
         }
-        context.tape().writeCell((byte) next);
+        tape.writeCell(frame, (byte) next);
     }
 
     @CompilerDirectives.TruffleBoundary
-    private int readFromInput(GraalFudgeContext context) {
+    private int readFromInput(InputStream stream) {
         try {
-            return context.input().read();
+            return stream.read();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

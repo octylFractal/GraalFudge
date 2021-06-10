@@ -33,7 +33,7 @@ import java.io.UncheckedIOException;
     name = GraalFudgeLanguage.NAME,
     defaultMimeType = GraalFudgeLanguage.MIME_TYPE,
     characterMimeTypes = GraalFudgeLanguage.MIME_TYPE,
-    contextPolicy = TruffleLanguage.ContextPolicy.REUSE,
+    contextPolicy = TruffleLanguage.ContextPolicy.EXCLUSIVE,
     fileTypeDetectors = GraalFudgeFileDetector.class
 )
 @ProvidedTags({

@@ -20,6 +20,7 @@ package net.octyl.graalfudge.language.node;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
@@ -32,6 +33,7 @@ import net.octyl.graalfudge.language.GraalFudgeContext;
 import net.octyl.graalfudge.language.GraalFudgeLanguage;
 
 @GenerateWrapper
+@ReportPolymorphism
 public abstract class GraalFudgeStatementNode extends Node implements InstrumentableNode {
     private final SourceSection sourceSection;
     @CompilerDirectives.CompilationFinal

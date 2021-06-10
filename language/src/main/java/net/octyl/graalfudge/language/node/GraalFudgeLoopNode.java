@@ -30,15 +30,16 @@ import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import net.octyl.graalfudge.language.GraalFudgeContext;
 import net.octyl.graalfudge.language.GraalFudgeLanguage;
+import net.octyl.graalfudge.language.util.InfiniteTape;
 
 @NodeInfo(shortName = "loop")
 public class GraalFudgeLoopNode extends GraalFudgeStatementNode {
     @Child
     private LoopNode loopNode;
 
-    public GraalFudgeLoopNode(SourceSection sourceSection, GraalFudgeGroupNode bodyNode) {
+    public GraalFudgeLoopNode(SourceSection sourceSection, InfiniteTape tape, GraalFudgeGroupNode bodyNode) {
         super(sourceSection);
-        this.loopNode = Truffle.getRuntime().createLoopNode(new GraalFudgeLoopNodeInternal(bodyNode));
+        this.loopNode = Truffle.getRuntime().createLoopNode(new GraalFudgeLoopNodeInternal(tape, bodyNode));
     }
 
     @Override
@@ -48,26 +49,19 @@ public class GraalFudgeLoopNode extends GraalFudgeStatementNode {
 
     private static final class GraalFudgeLoopNodeInternal extends Node implements RepeatingNode {
         private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
+        @CompilerDirectives.CompilationFinal
+        private InfiniteTape tape;
         @Child
         private GraalFudgeGroupNode bodyNode;
-        @CompilerDirectives.CompilationFinal
-        private TruffleLanguage.ContextReference<GraalFudgeContext> context;
 
-        private GraalFudgeLoopNodeInternal(GraalFudgeGroupNode bodyNode) {
+        private GraalFudgeLoopNodeInternal(InfiniteTape tape, GraalFudgeGroupNode bodyNode) {
+            this.tape = tape;
             this.bodyNode = bodyNode;
-        }
-
-        protected GraalFudgeContext useContext() {
-            if (context == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                context = lookupContextReference(GraalFudgeLanguage.class);
-            }
-            return context.get();
         }
 
         @Override
         public boolean executeRepeating(VirtualFrame frame) {
-            if (loopProfile.profile(useContext().tape().readCell() == 0)) {
+            if (loopProfile.profile(tape.readCell(frame) == 0)) {
                 return false;
             }
             bodyNode.execute(frame);
