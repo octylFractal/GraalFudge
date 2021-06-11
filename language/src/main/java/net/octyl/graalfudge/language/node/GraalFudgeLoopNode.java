@@ -18,9 +18,7 @@
 
 package net.octyl.graalfudge.language.node;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
@@ -28,8 +26,6 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
-import net.octyl.graalfudge.language.GraalFudgeContext;
-import net.octyl.graalfudge.language.GraalFudgeLanguage;
 import net.octyl.graalfudge.language.util.InfiniteTape;
 
 @NodeInfo(shortName = "loop")
@@ -37,7 +33,7 @@ public class GraalFudgeLoopNode extends GraalFudgeStatementNode {
     @Child
     private LoopNode loopNode;
 
-    public GraalFudgeLoopNode(SourceSection sourceSection, InfiniteTape tape, GraalFudgeGroupNode bodyNode) {
+    public GraalFudgeLoopNode(SourceSection sourceSection, InfiniteTape tape, GraalFudgeStatementNode bodyNode) {
         super(sourceSection);
         this.loopNode = Truffle.getRuntime().createLoopNode(new GraalFudgeLoopNodeInternal(tape, bodyNode));
     }
@@ -49,12 +45,11 @@ public class GraalFudgeLoopNode extends GraalFudgeStatementNode {
 
     private static final class GraalFudgeLoopNodeInternal extends Node implements RepeatingNode {
         private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
-        @CompilerDirectives.CompilationFinal
-        private InfiniteTape tape;
+        private final InfiniteTape tape;
         @Child
-        private GraalFudgeGroupNode bodyNode;
+        private GraalFudgeStatementNode bodyNode;
 
-        private GraalFudgeLoopNodeInternal(InfiniteTape tape, GraalFudgeGroupNode bodyNode) {
+        private GraalFudgeLoopNodeInternal(InfiniteTape tape, GraalFudgeStatementNode bodyNode) {
             this.tape = tape;
             this.bodyNode = bodyNode;
         }

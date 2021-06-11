@@ -23,7 +23,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
 import net.octyl.graalfudge.language.GraalFudgeLanguage;
-import net.octyl.graalfudge.language.util.GraalFudgeNull;
 import net.octyl.graalfudge.language.util.InfiniteTape;
 
 @NodeInfo(language = GraalFudgeLanguage.NAME, description = "The root of a GraalFudge tree")
@@ -42,6 +41,6 @@ public class GraalFudgeRootNode extends RootNode {
     public Object execute(VirtualFrame frame) {
         tape.initialize(frame);
         groupNode.execute(frame);
-        return GraalFudgeNull.SINGLETON;
+        return tape.dataPointer(frame);
     }
 }

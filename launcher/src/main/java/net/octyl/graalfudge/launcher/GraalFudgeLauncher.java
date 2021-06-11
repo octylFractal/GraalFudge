@@ -21,6 +21,7 @@ package net.octyl.graalfudge.launcher;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -77,11 +78,12 @@ public class GraalFudgeLauncher implements Callable<Integer> {
             .allowExperimentalOptions(experimentalOptions)
             .options(options)
             .build()) {
+            Value v = ctx.parse(source);
             long startTime = 0L;
             if (profile) {
                 startTime = System.nanoTime();
             }
-            ctx.eval(source);
+            v.execute();
             if (profile) {
                 long elapsed = System.nanoTime() - startTime;
                 System.err.println("Took " + TimeUnit.NANOSECONDS.toMillis(elapsed) + "ms to run");

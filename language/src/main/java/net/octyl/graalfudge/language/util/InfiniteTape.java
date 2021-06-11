@@ -43,21 +43,17 @@ public class InfiniteTape {
         frame.setObject(bufferPointer, buffer);
     }
 
-    private byte[] buffer(VirtualFrame frame) {
+    public byte[] buffer(VirtualFrame frame) {
         byte[] buffer;
         try {
             buffer = (byte[]) frame.getObject(bufferPointer);
         } catch (FrameSlotTypeException e) {
             throw new AssertionError("Expected object slot", e);
         }
-        if (buffer == null) {
-            buffer = new byte[1_024];
-            frame.setObject(bufferPointer, buffer);
-        }
         return buffer;
     }
 
-    private int dataPointer(VirtualFrame frame) {
+    public int dataPointer(VirtualFrame frame) {
         try {
             return frame.getInt(dataPointer);
         } catch (FrameSlotTypeException e) {
@@ -66,8 +62,20 @@ public class InfiniteTape {
     }
 
     public void initialize(VirtualFrame frame) {
-        frame.setObject(bufferPointer, new byte[1024]);
-        frame.setInt(dataPointer, 0);
+        if (frame.getArguments().length == 0) {
+            initializeFrom(frame, new byte[1024], 0);
+        } else {
+            initializeFrom(frame, (byte[]) frame.getArguments()[0], (int) frame.getArguments()[1]);
+        }
+    }
+
+    public void initializeFrom(VirtualFrame frame, byte[] buffer, int dataPointer) {
+        frame.setObject(bufferPointer, buffer);
+        setDataPointer(frame, dataPointer);
+    }
+
+    public void setDataPointer(VirtualFrame frame, int dataPointer) {
+        frame.setInt(this.dataPointer, dataPointer);
     }
 
     public void incrementCell(VirtualFrame frame) {

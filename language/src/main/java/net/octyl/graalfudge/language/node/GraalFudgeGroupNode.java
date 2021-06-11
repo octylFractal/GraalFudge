@@ -23,6 +23,7 @@ import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.source.SourceSection;
 
 /**
@@ -58,6 +59,7 @@ public class GraalFudgeGroupNode extends GraalFudgeStatementNode {
         return new GraalFudgeGroupNodeWrapper(this, this, probeNode);
     }
 
+    @ExplodeLoop
     @Override
     public void execute(VirtualFrame frame) {
         for (var statementNode : statementNodes) {

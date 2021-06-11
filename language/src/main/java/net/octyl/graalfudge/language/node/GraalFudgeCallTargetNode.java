@@ -18,34 +18,37 @@
 
 package net.octyl.graalfudge.language.node;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.GenerateWrapper;
+import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
 import net.octyl.graalfudge.language.util.InfiniteTape;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
+/**
+ * An indirection to introduce a new root node at this location.
+ */
+@NodeInfo(shortName = "Call target")
+@GenerateWrapper
+public class GraalFudgeCallTargetNode extends GraalFudgeStatementNode {
+    private final InfiniteTape tape;
+    private final RootCallTarget callTarget;
 
-@NodeInfo(shortName = "printCell")
-public class GraalFudgePrintCellNode extends GraalFudgeBuiltInNode {
-    public GraalFudgePrintCellNode(SourceSection sourceSection, InfiniteTape tape) {
-        super(sourceSection, tape);
+    public GraalFudgeCallTargetNode(SourceSection sourceSection, InfiniteTape tape, RootCallTarget callTarget) {
+        super(sourceSection);
+        this.tape = tape;
+        this.callTarget = callTarget;
+    }
+
+    @Override
+    public WrapperNode createWrapper(ProbeNode probeNode) {
+        return new GraalFudgeCallTargetNodeWrapper(getSourceSection(), tape, callTarget, this, probeNode);
     }
 
     @Override
     public void execute(VirtualFrame frame) {
-         byte b = tape.readCell(frame);
-         writeToOutput(useContext().output(), b);
-    }
-
-    @CompilerDirectives.TruffleBoundary
-    private void writeToOutput(OutputStream stream, byte b) {
-        try {
-            stream.write(b);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        var dataPointer = (int) callTarget.call(tape.buffer(frame), tape.dataPointer(frame));
+        tape.setDataPointer(frame, dataPointer);
     }
 }

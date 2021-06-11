@@ -18,9 +18,11 @@
 
 package net.octyl.graalfudge.language.parser;
 
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.source.Source;
 import net.octyl.graalfudge.language.GraalFudgeLanguage;
+import net.octyl.graalfudge.language.node.GraalFudgeCallTargetNode;
 import net.octyl.graalfudge.language.node.GraalFudgeDecrementCellNode;
 import net.octyl.graalfudge.language.node.GraalFudgeGroupNode;
 import net.octyl.graalfudge.language.node.GraalFudgeIncrementCellNode;
@@ -91,15 +93,31 @@ public class GraalFudgeParser {
                     var loopBodySourceSection = source.createSection(
                         loopBody.start + 1, Math.max(i - loopBody.start - 1, 0)
                     );
-                    groupNodeStack.getLast().children.add(
-                        new GraalFudgeLoopNode(
-                            loopSourceSection, tape,
-                            new GraalFudgeGroupNode(
-                                loopBodySourceSection,
-                                false,
-                                loopBody.children.toArray(new GraalFudgeStatementNode[0])
+                    var groupNode = new GraalFudgeGroupNode(
+                        loopBodySourceSection,
+                        false,
+                        loopBody.children.toArray(new GraalFudgeStatementNode[0])
+                    );
+                    GraalFudgeStatementNode loopBodyNode;
+                    if (loopBody.children.stream().anyMatch(s -> s instanceof GraalFudgeLoopNode)) {
+                        // nested loops deserve a dedicated root
+                        loopBodyNode = new GraalFudgeCallTargetNode(
+                            loopBodySourceSection,
+                            tape,
+                            Truffle.getRuntime().createCallTarget(
+                                new GraalFudgeRootNode(
+                                    language,
+                                    frameDescriptor,
+                                    tape,
+                                    groupNode
+                                )
                             )
-                        )
+                        );
+                    } else {
+                        loopBodyNode = groupNode;
+                    }
+                    groupNodeStack.getLast().children.add(
+                        new GraalFudgeLoopNode(loopSourceSection, tape, loopBodyNode)
                     );
                 }
                 default -> {
