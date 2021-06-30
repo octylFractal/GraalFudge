@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.octyl.graalfudge.language.node;
+package net.octyl.graalfudge.language.bf.node;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLanguage;
@@ -29,8 +29,8 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
-import net.octyl.graalfudge.language.GraalFudgeContext;
-import net.octyl.graalfudge.language.GraalFudgeLanguage;
+import net.octyl.graalfudge.language.bf.GraalFudgeContext;
+import net.octyl.graalfudge.language.bf.GraalFudgeLanguage;
 
 @GenerateWrapper
 @ReportPolymorphism

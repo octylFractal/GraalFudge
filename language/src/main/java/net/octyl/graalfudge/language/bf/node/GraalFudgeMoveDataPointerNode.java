@@ -16,36 +16,36 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.octyl.graalfudge.language.node;
+package net.octyl.graalfudge.language.bf.node;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
 import net.octyl.graalfudge.language.util.InfiniteTape;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
+@NodeInfo(shortName = "moveDataPointer")
+public class GraalFudgeMoveDataPointerNode extends GraalFudgeBuiltInNode implements GraalFudgeDeltaNode {
+    private final int amount;
 
-@NodeInfo(shortName = "printCell")
-public class GraalFudgePrintCellNode extends GraalFudgeBuiltInNode {
-    public GraalFudgePrintCellNode(SourceSection sourceSection, InfiniteTape tape) {
+    public GraalFudgeMoveDataPointerNode(SourceSection sourceSection, InfiniteTape tape, int amount) {
         super(sourceSection, tape);
+        this.amount = amount;
+    }
+
+    @Override
+    public int amount() {
+        return amount;
     }
 
     @Override
     public void execute(VirtualFrame frame) {
-         byte b = tape.readCell(frame);
-         writeToOutput(useContext().output(), b);
+        tape.moveDataPointer(frame, amount);
     }
 
-    @CompilerDirectives.TruffleBoundary
-    private void writeToOutput(OutputStream stream, byte b) {
-        try {
-            stream.write(b);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    @Override
+    public String toString() {
+        return "GraalFudgeMoveDataPointerNode{" +
+            "amount=" + amount +
+            '}';
     }
 }

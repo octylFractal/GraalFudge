@@ -16,18 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.octyl.graalfudge.language.util;
+package net.octyl.graalfudge.language.bf.node;
 
-import java.util.List;
-import java.util.function.Predicate;
-
-public class ListSearch {
-    public static <T> int indexOf(List<T> items, Predicate<T> predicate) {
-        for (int i = 0; i < items.size(); i++) {
-            if (predicate.test(items.get(i))) {
-                return i;
-            }
-        }
-        return -1;
-    }
+public interface GraalFudgeDeltaNode {
+    int amount();
 }

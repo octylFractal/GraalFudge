@@ -16,21 +16,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.octyl.graalfudge.language.parser;
+package net.octyl.graalfudge.language.bf.parser;
 
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.source.Source;
-import net.octyl.graalfudge.language.GraalFudgeLanguage;
-import net.octyl.graalfudge.language.node.GraalFudgeGroupNode;
-import net.octyl.graalfudge.language.node.GraalFudgeChangeCellNode;
-import net.octyl.graalfudge.language.node.GraalFudgeLoopNode;
-import net.octyl.graalfudge.language.node.GraalFudgeMoveDataPointerNode;
-import net.octyl.graalfudge.language.node.GraalFudgePrintCellNode;
-import net.octyl.graalfudge.language.node.GraalFudgeReadCellNode;
-import net.octyl.graalfudge.language.node.GraalFudgeRootNode;
-import net.octyl.graalfudge.language.node.GraalFudgeStatementNode;
+import net.octyl.graalfudge.language.bf.GraalFudgeLanguage;
+import net.octyl.graalfudge.language.bf.node.GraalFudgeGroupNode;
+import net.octyl.graalfudge.language.bf.node.GraalFudgeChangeCellNode;
+import net.octyl.graalfudge.language.bf.node.GraalFudgeLoopNode;
+import net.octyl.graalfudge.language.bf.node.GraalFudgeMoveDataPointerNode;
+import net.octyl.graalfudge.language.bf.node.GraalFudgePrintCellNode;
+import net.octyl.graalfudge.language.bf.node.GraalFudgeReadCellNode;
+import net.octyl.graalfudge.language.bf.node.GraalFudgeRootNode;
+import net.octyl.graalfudge.language.bf.node.GraalFudgeStatementNode;
 import net.octyl.graalfudge.language.util.InfiniteTape;
 
 import java.util.ArrayDeque;

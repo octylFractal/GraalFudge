@@ -16,25 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.octyl.graalfudge.language;
+package net.octyl.graalfudge.language.wutlang;
 
-import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import net.octyl.graalfudge.language.util.InfiniteTape;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.Arrays;
 
-public record GraalFudgeContext(
-    GraalFudgeLanguage language,
-    InputStream input,
-    OutputStream output
+public record WutlangDebugInfo(
+    byte[] buffer
 ) {
-    public GraalFudgeContext(GraalFudgeLanguage language, TruffleLanguage.Env env) {
-        this(
-            language,
-            new BufferedInputStream(env.in()),
-            new BufferedOutputStream(env.out())
+    public static WutlangDebugInfo getDebugInfo(InfiniteTape tape, VirtualFrame frame) {
+        return new WutlangDebugInfo(
+            Arrays.copyOf(tape.buffer(frame), tape.maximumIndexUsed(frame) + 1)
         );
     }
 }

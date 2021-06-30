@@ -16,18 +16,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.octyl.graalfudge.language.node;
+package net.octyl.graalfudge.language.wutlang;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.source.SourceSection;
-import net.octyl.graalfudge.language.util.InfiniteTape;
+import com.oracle.truffle.api.TruffleFile;
 
-public abstract class GraalFudgeBuiltInNode extends GraalFudgeStatementNode {
-    @CompilerDirectives.CompilationFinal
-    protected InfiniteTape tape;
+import java.io.IOException;
+import java.nio.charset.Charset;
 
-    public GraalFudgeBuiltInNode(SourceSection sourceSection, InfiniteTape tape) {
-        super(sourceSection);
-        this.tape = tape;
+public class WutlangFileDetector implements TruffleFile.FileTypeDetector {
+    @Override
+    public String findMimeType(TruffleFile file) throws IOException {
+        String name = file.getName();
+        if (name != null && name.endsWith(".wl")) {
+            return WutlangLanguage.MIME_TYPE;
+        }
+        return null;
+    }
+
+    @Override
+    public Charset findEncoding(TruffleFile file) throws IOException {
+        return null;
     }
 }

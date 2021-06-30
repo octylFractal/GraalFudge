@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.octyl.graalfudge.language.node;
+package net.octyl.graalfudge.language.wutlang.node;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -24,10 +24,10 @@ import com.oracle.truffle.api.source.SourceSection;
 import net.octyl.graalfudge.language.util.InfiniteTape;
 
 @NodeInfo(shortName = "moveDataPointer")
-public class GraalFudgeMoveDataPointerNode extends GraalFudgeBuiltInNode implements GraalFudgeDeltaNode {
+public class WutlangMoveDataPointerNode extends WutlangBuiltInNode implements WutlangDeltaNode {
     private final int amount;
 
-    public GraalFudgeMoveDataPointerNode(SourceSection sourceSection, InfiniteTape tape, int amount) {
+    public WutlangMoveDataPointerNode(SourceSection sourceSection, InfiniteTape tape, int amount) {
         super(sourceSection, tape);
         this.amount = amount;
     }
@@ -44,7 +44,7 @@ public class GraalFudgeMoveDataPointerNode extends GraalFudgeBuiltInNode impleme
 
     @Override
     public String toString() {
-        return "GraalFudgeMoveDataPointerNode{" +
+        return "WutlangMoveDataPointerNode{" +
             "amount=" + amount +
             '}';
     }

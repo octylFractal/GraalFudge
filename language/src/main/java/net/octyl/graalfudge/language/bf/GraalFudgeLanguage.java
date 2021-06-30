@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.octyl.graalfudge.language;
+package net.octyl.graalfudge.language.bf;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
-import net.octyl.graalfudge.language.parser.GraalFudgeParser;
+import net.octyl.graalfudge.language.bf.parser.GraalFudgeParser;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

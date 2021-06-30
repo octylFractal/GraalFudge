@@ -19,7 +19,6 @@
 package net.octyl.graalfudge.launcher;
 
 import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import picocli.CommandLine;
@@ -37,11 +36,9 @@ import java.util.concurrent.TimeUnit;
     name = "graalfudge",
     mixinStandardHelpOptions = true,
     version = "0.1.0-SNAPSHOT",
-    description = "Runs a brainf*** file in the GraalVM"
+    description = "Runs a Brainf*** or Wutlang file in the GraalVM"
 )
 public class GraalFudgeLauncher implements Callable<Integer> {
-    private static final String LANG_ID = "graalfudge";
-
     public static void main(String[] args) {
         System.exit(
             new CommandLine(new GraalFudgeLauncher()).execute(args)
@@ -53,6 +50,9 @@ public class GraalFudgeLauncher implements Callable<Integer> {
 
     @CommandLine.Option(names = {"-p", "--profile"}, description = "Time the execution of the program")
     private boolean profile;
+
+    @CommandLine.Option(names = {"-l", "--language"}, description = "Force language, will detect using the file by default")
+    private String language;
 
     @CommandLine.Option(names = {"--experimental-options"}, description = "Allow Graal experimental options")
     private boolean experimentalOptions;
@@ -68,11 +68,9 @@ public class GraalFudgeLauncher implements Callable<Integer> {
                 throw new IllegalStateException("Unrecognized argument: " + arg);
             }
         }
-        if (!Engine.create().getLanguages().containsKey(LANG_ID)) {
-            throw new IllegalStateException("Missing " + LANG_ID + " in GraalVM runtime");
-        }
-        var source = Source.newBuilder(LANG_ID, file.toFile()).build();
-        try (var ctx = Context.newBuilder(LANG_ID)
+        var language = this.language != null ? this.language : Source.findLanguage(file.toFile());
+        var source = Source.newBuilder(language, file.toFile()).build();
+        try (var ctx = Context.newBuilder(language)
             .in(System.in)
             .out(System.out)
             .allowExperimentalOptions(experimentalOptions)

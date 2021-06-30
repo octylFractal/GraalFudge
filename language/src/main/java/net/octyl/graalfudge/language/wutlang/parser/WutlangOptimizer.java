@@ -16,41 +16,41 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.octyl.graalfudge.language.parser;
+package net.octyl.graalfudge.language.wutlang.parser;
 
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import net.octyl.graalfudge.language.node.GraalFudgeChangeCellNode;
-import net.octyl.graalfudge.language.node.GraalFudgeDeltaNode;
-import net.octyl.graalfudge.language.node.GraalFudgeMoveDataPointerNode;
-import net.octyl.graalfudge.language.node.GraalFudgeStatementNode;
 import net.octyl.graalfudge.language.util.InfiniteTape;
+import net.octyl.graalfudge.language.wutlang.node.WutlangChangeCellNode;
+import net.octyl.graalfudge.language.wutlang.node.WutlangDeltaNode;
+import net.octyl.graalfudge.language.wutlang.node.WutlangMoveDataPointerNode;
+import net.octyl.graalfudge.language.wutlang.node.WutlangStatementNode;
 
 import java.util.List;
 
-class GraalFudgeOptimizer {
+class WutlangOptimizer {
     private final Source source;
     private final InfiniteTape tape;
-    private final List<GraalFudgeStatementNode> children;
+    private final List<WutlangStatementNode> children;
 
-    GraalFudgeOptimizer(Source source, InfiniteTape tape, List<GraalFudgeStatementNode> children) {
+    WutlangOptimizer(Source source, InfiniteTape tape, List<WutlangStatementNode> children) {
         this.source = source;
         this.tape = tape;
         this.children = children;
     }
 
-    GraalFudgeStatementNode[] optimize() {
-        squishDeltaNodes(GraalFudgeMoveDataPointerNode.class, GraalFudgeMoveDataPointerNode::new);
-        squishDeltaNodes(GraalFudgeChangeCellNode.class, GraalFudgeChangeCellNode::new);
-        return children.toArray(new GraalFudgeStatementNode[0]);
+    WutlangStatementNode[] optimize() {
+        squishDeltaNodes(WutlangMoveDataPointerNode.class, WutlangMoveDataPointerNode::new);
+        squishDeltaNodes(WutlangChangeCellNode.class, WutlangChangeCellNode::new);
+        return children.toArray(new WutlangStatementNode[0]);
     }
 
     @FunctionalInterface
-    private interface DeltaNodeConstructor<T extends GraalFudgeStatementNode & GraalFudgeDeltaNode> {
+    private interface DeltaNodeConstructor<T extends WutlangStatementNode & WutlangDeltaNode> {
         T construct(SourceSection sourceSection, InfiniteTape tape, int amount);
     }
 
-    private <T extends GraalFudgeStatementNode & GraalFudgeDeltaNode> void squishDeltaNodes(
+    private <T extends WutlangStatementNode & WutlangDeltaNode> void squishDeltaNodes(
         Class<T> nodeType, DeltaNodeConstructor<T> constructor
     ) {
         int runStart = -1;

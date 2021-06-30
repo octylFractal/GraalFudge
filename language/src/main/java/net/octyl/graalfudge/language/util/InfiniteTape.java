@@ -33,10 +33,12 @@ public final class InfiniteTape {
     private final ConditionProfile reallocateProfile = ConditionProfile.createCountingProfile();
     private final FrameSlot bufferPointer;
     private final FrameSlot dataPointer;
+    private final FrameSlot maximumIndexUsedPointer;
 
     public InfiniteTape(FrameDescriptor frameDescriptor) {
         this.bufferPointer = frameDescriptor.addFrameSlot("bufferPointer", FrameSlotKind.Object);
         this.dataPointer = frameDescriptor.addFrameSlot("dataPointer", FrameSlotKind.Int);
+        this.maximumIndexUsedPointer = frameDescriptor.addFrameSlot("maximumIndexUsedPointer", FrameSlotKind.Int);
     }
 
     private void reallocateBuffer(VirtualFrame frame, int minSize) {
@@ -64,21 +66,40 @@ public final class InfiniteTape {
         }
     }
 
-    public void initialize(VirtualFrame frame) {
-        if (frame.getArguments().length == 0) {
-            initializeFrom(frame, new byte[1024], 0);
-        } else {
-            initializeFrom(frame, (byte[]) frame.getArguments()[0], (int) frame.getArguments()[1]);
+    public int maximumIndexUsed(VirtualFrame frame) {
+        try {
+            return frame.getInt(maximumIndexUsedPointer);
+        } catch (FrameSlotTypeException e) {
+            throw new AssertionError("Expected int slot", e);
         }
     }
 
-    public void initializeFrom(VirtualFrame frame, byte[] buffer, int dataPointer) {
+    public void initialize(VirtualFrame frame) {
+        if (frame.getArguments().length == 0) {
+            initializeFrom(frame, new byte[1024], new InfiniteTapeObject(0, 0));
+        } else {
+            initializeFrom(frame, (byte[]) frame.getArguments()[0], (InfiniteTapeObject) frame.getArguments()[1]);
+        }
+    }
+
+    public void initializeFrom(VirtualFrame frame, byte[] buffer, InfiniteTapeObject object) {
         frame.setObject(bufferPointer, buffer);
-        setDataPointer(frame, dataPointer);
+        frame.setInt(maximumIndexUsedPointer, 0);
+        updateFrom(frame, object);
+    }
+
+    public void updateFrom(VirtualFrame frame, InfiniteTapeObject object) {
+        frame.setInt(maximumIndexUsedPointer, Math.max(maximumIndexUsed(frame), object.maximumIndexUsed()));
+        setDataPointer(frame, object.dataPointer());
+    }
+
+    public InfiniteTapeObject materialize(VirtualFrame frame) {
+        return new InfiniteTapeObject(dataPointer(frame), maximumIndexUsed(frame));
     }
 
     public void setDataPointer(VirtualFrame frame, int dataPointer) {
         frame.setInt(this.dataPointer, dataPointer);
+        frame.setInt(maximumIndexUsedPointer, Math.max(dataPointer, maximumIndexUsed(frame)));
     }
 
     public void changeCell(VirtualFrame frame, int amount) {
@@ -87,7 +108,7 @@ public final class InfiniteTape {
 
     public void moveDataPointer(VirtualFrame frame, int amount) {
         int value = dataPointer(frame) + amount;
-        frame.setInt(dataPointer, value);
+        setDataPointer(frame, value);
         if (reallocateProfile.profile(value >= buffer(frame).length)) {
             reallocateBuffer(frame, value);
         } else if (value < 0) {

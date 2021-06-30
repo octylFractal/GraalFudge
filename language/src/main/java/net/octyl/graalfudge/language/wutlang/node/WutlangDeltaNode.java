@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.octyl.graalfudge.language.node;
+package net.octyl.graalfudge.language.wutlang.node;
 
-public interface GraalFudgeDeltaNode {
+public interface WutlangDeltaNode {
     int amount();
 }

@@ -16,6 +16,7 @@ dependencies {
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
+    testImplementation(libs.graal.sdk)
 
     testImplementation(libs.truth) {
         exclude(group = "junit")

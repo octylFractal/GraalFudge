@@ -16,31 +16,36 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.octyl.graalfudge.language.node;
+package net.octyl.graalfudge.language.wutlang.node;
 
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.nodes.RootNode;
-import net.octyl.graalfudge.language.GraalFudgeLanguage;
+import com.oracle.truffle.api.source.SourceSection;
 import net.octyl.graalfudge.language.util.InfiniteTape;
 
-@NodeInfo(language = GraalFudgeLanguage.NAME, description = "The root of a GraalFudge tree")
-public class GraalFudgeRootNode extends RootNode {
-    private final InfiniteTape tape;
-    @Child
-    private GraalFudgeGroupNode groupNode;
+@NodeInfo(shortName = "changeCell")
+public class WutlangChangeCellNode extends WutlangBuiltInNode implements WutlangDeltaNode {
+    private final int amount;
 
-    public GraalFudgeRootNode(GraalFudgeLanguage language, FrameDescriptor frameDescriptor, InfiniteTape tape, GraalFudgeGroupNode groupNode) {
-        super(language, frameDescriptor);
-        this.tape = tape;
-        this.groupNode = groupNode;
+    public WutlangChangeCellNode(SourceSection sourceSection, InfiniteTape tape, int amount) {
+        super(sourceSection, tape);
+        this.amount = amount;
     }
 
     @Override
-    public Object execute(VirtualFrame frame) {
-        tape.initialize(frame);
-        groupNode.execute(frame);
-        return tape.dataPointer(frame);
+    public int amount() {
+        return amount;
+    }
+
+    @Override
+    public void execute(VirtualFrame frame) {
+        tape.changeCell(frame, amount);
+    }
+
+    @Override
+    public String toString() {
+        return "WutlangChangeCellNode{" +
+            "amount=" + amount +
+            '}';
     }
 }
