@@ -23,14 +23,29 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
 import net.octyl.graalfudge.language.util.InfiniteTape;
 
-@NodeInfo(shortName = "decrementCell")
-public class GraalFudgeDecrementCellNode extends GraalFudgeBuiltInNode {
-    public GraalFudgeDecrementCellNode(SourceSection sourceSection, InfiniteTape tape) {
+@NodeInfo(shortName = "moveDataPointer")
+public class GraalFudgeMoveDataPointerNode extends GraalFudgeBuiltInNode implements GraalFudgeDeltaNode {
+    private final int amount;
+
+    public GraalFudgeMoveDataPointerNode(SourceSection sourceSection, InfiniteTape tape, int amount) {
         super(sourceSection, tape);
+        this.amount = amount;
+    }
+
+    @Override
+    public int amount() {
+        return amount;
     }
 
     @Override
     public void execute(VirtualFrame frame) {
-        tape.decrementCell(frame);
+        tape.moveDataPointer(frame, amount);
+    }
+
+    @Override
+    public String toString() {
+        return "GraalFudgeMoveDataPointerNode{" +
+            "amount=" + amount +
+            '}';
     }
 }

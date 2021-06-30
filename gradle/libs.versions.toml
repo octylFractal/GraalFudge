@@ -1,6 +1,7 @@
 [versions]
 graal = "21.1.0"
 picocli = "4.6.1"
+jmh = "1.30"
 
 [libraries.checkerframework-qual]
 module = "org.checkerframework:checker-qual"
@@ -25,6 +26,14 @@ version.ref = "picocli"
 [libraries.picocli-codegen]
 module = "info.picocli:picocli-codegen"
 version.ref = "picocli"
+
+[libraries.jmh-core]
+module = "org.openjdk.jmh:jmh-core"
+version.ref = "jmh"
+
+[libraries.jmh-generator-annprocess]
+module = "org.openjdk.jmh:jmh-generator-annprocess"
+version.ref = "jmh"
 
 [libraries.junit-bom]
 module = "org.junit:junit-bom"

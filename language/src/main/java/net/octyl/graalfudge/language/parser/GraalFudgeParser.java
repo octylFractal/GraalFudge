@@ -20,15 +20,13 @@ package net.octyl.graalfudge.language.parser;
 
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.source.Source;
 import net.octyl.graalfudge.language.GraalFudgeLanguage;
-import net.octyl.graalfudge.language.node.GraalFudgeCallTargetNode;
-import net.octyl.graalfudge.language.node.GraalFudgeDecrementCellNode;
 import net.octyl.graalfudge.language.node.GraalFudgeGroupNode;
-import net.octyl.graalfudge.language.node.GraalFudgeIncrementCellNode;
+import net.octyl.graalfudge.language.node.GraalFudgeChangeCellNode;
 import net.octyl.graalfudge.language.node.GraalFudgeLoopNode;
-import net.octyl.graalfudge.language.node.GraalFudgeNextCellNode;
-import net.octyl.graalfudge.language.node.GraalFudgePrevCellNode;
+import net.octyl.graalfudge.language.node.GraalFudgeMoveDataPointerNode;
 import net.octyl.graalfudge.language.node.GraalFudgePrintCellNode;
 import net.octyl.graalfudge.language.node.GraalFudgeReadCellNode;
 import net.octyl.graalfudge.language.node.GraalFudgeRootNode;
@@ -59,17 +57,17 @@ public class GraalFudgeParser {
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
             switch (c) {
-                case '>' -> groupNodeStack.getLast().children.add(new GraalFudgeNextCellNode(
-                    source.createSection(i, 1), tape
+                case '>' -> groupNodeStack.getLast().children.add(new GraalFudgeMoveDataPointerNode(
+                    source.createSection(i, 1), tape, 1
+                    ));
+                case '<' -> groupNodeStack.getLast().children.add(new GraalFudgeMoveDataPointerNode(
+                    source.createSection(i, 1), tape, -1
                 ));
-                case '<' -> groupNodeStack.getLast().children.add(new GraalFudgePrevCellNode(
-                    source.createSection(i, 1), tape
+                case '+' -> groupNodeStack.getLast().children.add(new GraalFudgeChangeCellNode(
+                    source.createSection(i, 1), tape, 1
                 ));
-                case '+' -> groupNodeStack.getLast().children.add(new GraalFudgeIncrementCellNode(
-                    source.createSection(i, 1), tape
-                ));
-                case '-' -> groupNodeStack.getLast().children.add(new GraalFudgeDecrementCellNode(
-                    source.createSection(i, 1), tape
+                case '-' -> groupNodeStack.getLast().children.add(new GraalFudgeChangeCellNode(
+                    source.createSection(i, 1), tape, -1
                 ));
                 case '.' -> groupNodeStack.getLast().children.add(new GraalFudgePrintCellNode(
                     source.createSection(i, 1), tape
@@ -96,26 +94,18 @@ public class GraalFudgeParser {
                     var groupNode = new GraalFudgeGroupNode(
                         loopBodySourceSection,
                         false,
-                        loopBody.children.toArray(new GraalFudgeStatementNode[0])
+                        new GraalFudgeOptimizer(source, tape, loopBody.children).optimize()
                     );
-                    GraalFudgeStatementNode loopBodyNode;
-                    if (loopBody.children.stream().anyMatch(s -> s instanceof GraalFudgeLoopNode)) {
-                        // nested loops deserve a dedicated root
-                        loopBodyNode = new GraalFudgeCallTargetNode(
-                            loopBodySourceSection,
-                            tape,
-                            Truffle.getRuntime().createCallTarget(
-                                new GraalFudgeRootNode(
-                                    language,
-                                    frameDescriptor,
-                                    tape,
-                                    groupNode
-                                )
+                    DirectCallNode loopBodyNode = Truffle.getRuntime().createDirectCallNode(
+                        Truffle.getRuntime().createCallTarget(
+                            new GraalFudgeRootNode(
+                                language,
+                                frameDescriptor,
+                                tape,
+                                groupNode
                             )
-                        );
-                    } else {
-                        loopBodyNode = groupNode;
-                    }
+                        )
+                    );
                     groupNodeStack.getLast().children.add(
                         new GraalFudgeLoopNode(loopSourceSection, tape, loopBodyNode)
                     );
@@ -125,7 +115,7 @@ public class GraalFudgeParser {
                 }
             }
         }
-        var statements = groupNodeStack.removeLast().children.toArray(new GraalFudgeStatementNode[0]);
+        var statements = new GraalFudgeOptimizer(source, tape, groupNodeStack.removeLast().children).optimize();
         int startOfAllStatements = statements[0].getSourceSection().getCharIndex();
         int endOfAllStatements = statements[statements.length - 1].getSourceSection().getCharEndIndex();
         var rootNode = new GraalFudgeRootNode(
@@ -143,4 +133,5 @@ public class GraalFudgeParser {
         }
         return rootNode;
     }
+
 }

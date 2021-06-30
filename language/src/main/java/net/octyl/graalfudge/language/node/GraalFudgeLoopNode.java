@@ -20,6 +20,7 @@ package net.octyl.graalfudge.language.node;
 
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -33,7 +34,7 @@ public class GraalFudgeLoopNode extends GraalFudgeStatementNode {
     @Child
     private LoopNode loopNode;
 
-    public GraalFudgeLoopNode(SourceSection sourceSection, InfiniteTape tape, GraalFudgeStatementNode bodyNode) {
+    public GraalFudgeLoopNode(SourceSection sourceSection, InfiniteTape tape, DirectCallNode bodyNode) {
         super(sourceSection);
         this.loopNode = Truffle.getRuntime().createLoopNode(new GraalFudgeLoopNodeInternal(tape, bodyNode));
     }
@@ -47,9 +48,9 @@ public class GraalFudgeLoopNode extends GraalFudgeStatementNode {
         private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
         private final InfiniteTape tape;
         @Child
-        private GraalFudgeStatementNode bodyNode;
+        private DirectCallNode bodyNode;
 
-        private GraalFudgeLoopNodeInternal(InfiniteTape tape, GraalFudgeStatementNode bodyNode) {
+        private GraalFudgeLoopNodeInternal(InfiniteTape tape, DirectCallNode bodyNode) {
             this.tape = tape;
             this.bodyNode = bodyNode;
         }
@@ -59,7 +60,8 @@ public class GraalFudgeLoopNode extends GraalFudgeStatementNode {
             if (loopProfile.profile(tape.readCell(frame) == 0)) {
                 return false;
             }
-            bodyNode.execute(frame);
+            var dataPointer = (int) bodyNode.call(tape.buffer(frame), tape.dataPointer(frame));
+            tape.setDataPointer(frame, dataPointer);
             return true;
         }
     }

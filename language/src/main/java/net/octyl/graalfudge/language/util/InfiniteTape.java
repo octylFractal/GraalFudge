@@ -18,16 +18,19 @@
 
 package net.octyl.graalfudge.language.util;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import java.util.Arrays;
 
-public class InfiniteTape {
+public final class InfiniteTape {
+    private final BranchProfile negativeTapeIndex = BranchProfile.create();
+    private final ConditionProfile reallocateProfile = ConditionProfile.createCountingProfile();
     private final FrameSlot bufferPointer;
     private final FrameSlot dataPointer;
 
@@ -78,27 +81,17 @@ public class InfiniteTape {
         frame.setInt(this.dataPointer, dataPointer);
     }
 
-    public void incrementCell(VirtualFrame frame) {
-        buffer(frame)[dataPointer(frame)]++;
+    public void changeCell(VirtualFrame frame, int amount) {
+        buffer(frame)[dataPointer(frame)] += amount;
     }
 
-    public void decrementCell(VirtualFrame frame) {
-        buffer(frame)[dataPointer(frame)]--;
-    }
-
-    public void nextCell(VirtualFrame frame) {
-        int value = dataPointer(frame) + 1;
+    public void moveDataPointer(VirtualFrame frame, int amount) {
+        int value = dataPointer(frame) + amount;
         frame.setInt(dataPointer, value);
-        if (value >= buffer(frame).length) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+        if (reallocateProfile.profile(value >= buffer(frame).length)) {
             reallocateBuffer(frame, value);
-        }
-    }
-
-    public void prevCell(VirtualFrame frame) {
-        int value = dataPointer(frame) - 1;
-        frame.setInt(dataPointer, value);
-        if (value < 0) {
+        } else if (value < 0) {
+            negativeTapeIndex.enter();
             throw new IllegalStateException("Data pointer moved below 0");
         }
     }

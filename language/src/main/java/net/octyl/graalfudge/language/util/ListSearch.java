@@ -16,21 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.octyl.graalfudge.language.node;
+package net.octyl.graalfudge.language.util;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.source.SourceSection;
-import net.octyl.graalfudge.language.util.InfiniteTape;
+import java.util.List;
+import java.util.function.Predicate;
 
-@NodeInfo(shortName = "incrementCell")
-public class GraalFudgeIncrementCellNode extends GraalFudgeBuiltInNode {
-    public GraalFudgeIncrementCellNode(SourceSection sourceSection, InfiniteTape tape) {
-        super(sourceSection, tape);
-    }
-
-    @Override
-    public void execute(VirtualFrame frame) {
-        tape.incrementCell(frame);
+public class ListSearch {
+    public static <T> int indexOf(List<T> items, Predicate<T> predicate) {
+        for (int i = 0; i < items.size(); i++) {
+            if (predicate.test(items.get(i))) {
+                return i;
+            }
+        }
+        return -1;
     }
 }
