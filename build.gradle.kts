@@ -3,7 +3,7 @@ import org.cadixdev.gradle.licenser.LicenseExtension
 plugins {
     base
     jacoco
-    id("org.cadixdev.licenser") version "0.6.0" apply false
+    id("org.cadixdev.licenser") version "0.6.1" apply false
 }
 
 allprojects {
