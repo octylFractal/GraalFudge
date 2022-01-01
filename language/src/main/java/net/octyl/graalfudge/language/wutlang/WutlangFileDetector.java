@@ -27,7 +27,7 @@ public class WutlangFileDetector implements TruffleFile.FileTypeDetector {
     @Override
     public String findMimeType(TruffleFile file) throws IOException {
         String name = file.getName();
-        if (name != null && name.endsWith(".wl")) {
+        if (name != null && name.endsWith(".wut")) {
             return WutlangLanguage.MIME_TYPE;
         }
         return null;

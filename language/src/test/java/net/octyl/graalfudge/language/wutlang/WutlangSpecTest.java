@@ -19,37 +19,20 @@
 package net.octyl.graalfudge.language.wutlang;
 
 
-import net.octyl.graalfudge.language.TestLanguageRunner;
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Source;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
+import static net.octyl.graalfudge.language.wutlang.WutlangTesting.eval;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 // Derived from the original WutlangSpecTest at https://github.com/me4502/wutlang
 // Licensed under the MIT license (LICENSE.wutlang.txt)
 public class WutlangSpecTest {
 
-    private static Context createContext() {
-        return TestLanguageRunner.createContext(WutlangLanguage.ID)
-            .option(WutlangLanguage.ID + ".testMode", "true")
-            .build();
-    }
-
-    private static WutlangDebugInfo eval(String name, String source) throws IOException {
-        try (var ctx = createContext()) {
-            var value = ctx.eval(
-                Source.newBuilder(WutlangLanguage.ID, source, name).build()
-            );
-            return value.as(WutlangDebugInfo.class);
-        }
-    }
-
     @Test
     void testHeap() throws IOException {
-        var debug = eval("heap.wl", "++>+>+++>++++");
+        var debug = eval("heap.wut", "++>+>+++>++++");
         assertArrayEquals(
             new byte[]{2, 1, 3, 4},
             debug.buffer()
@@ -58,7 +41,7 @@ public class WutlangSpecTest {
 
     @Test
     void testHeap2() throws IOException {
-        var debug = eval("heap2.wl", "++--+>+----->+>--+");
+        var debug = eval("heap2.wut", "++--+>+----->+>--+");
         assertArrayEquals(
             new byte[]{1, -4, 1, -1},
             debug.buffer()
@@ -67,7 +50,7 @@ public class WutlangSpecTest {
 
     @Test
     void testForLoop() throws IOException {
-        var debug = eval("forLoop.wl", "++++++++++[-]");
+        var debug = eval("forLoop.wut", "++++++++++[-]");
         assertArrayEquals(
             new byte[]{0},
             debug.buffer()
@@ -76,7 +59,7 @@ public class WutlangSpecTest {
 
     @Test
     void testNestedForLoop() throws IOException {
-        var debug = eval("nestedForLoop.wl", "+++>+++<[>[-]<-]");
+        var debug = eval("nestedForLoop.wut", "+++>+++<[>[-]<-]");
         assertArrayEquals(
             new byte[]{0, 0},
             debug.buffer()
@@ -85,7 +68,7 @@ public class WutlangSpecTest {
 
     @Test
     void testNestedForLoop2() throws IOException {
-        var debug = eval("nestedForLoop2.wl", ">++>++>++[[-]<]");
+        var debug = eval("nestedForLoop2.wut", ">++>++>++[[-]<]");
         assertArrayEquals(
             new byte[]{0, 0, 0, 0},
             debug.buffer()

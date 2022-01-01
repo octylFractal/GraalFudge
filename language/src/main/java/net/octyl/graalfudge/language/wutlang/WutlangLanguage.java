@@ -66,8 +66,8 @@ public class WutlangLanguage extends TruffleLanguage<WutlangContext> {
 
     @Override
     protected void disposeContext(WutlangContext context) {
-        try {
-            context.output().flush();
+        try (context) {
+            context.flush();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

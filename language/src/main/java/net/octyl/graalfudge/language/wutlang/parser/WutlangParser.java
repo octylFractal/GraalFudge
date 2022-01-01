@@ -48,73 +48,19 @@ public class WutlangParser {
         this.testMode = testMode;
     }
 
+    private record ProtoGroupNode(int start, List<WutlangStatementNode> children) {
+    }
+
     public WutlangRootNode parse() {
-        var text = source.getCharacters();
+        var lines = source.getCharacters().toString().lines().toList();
         var frameDescriptor = new FrameDescriptor();
         var tape = new InfiniteTape(frameDescriptor);
-        record ProtoGroupNode(int start, List<WutlangStatementNode> children) {
-        }
         var groupNodeStack = new ArrayDeque<ProtoGroupNode>();
         groupNodeStack.addLast(new ProtoGroupNode(0, new ArrayList<>()));
-        for (int i = 0; i < text.length(); i++) {
-            char c = text.charAt(i);
-            switch (c) {
-                case '>' -> groupNodeStack.getLast().children.add(new WutlangMoveDataPointerNode(
-                    source.createSection(i, 1), tape, 1
-                ));
-                case '<' -> groupNodeStack.getLast().children.add(new WutlangMoveDataPointerNode(
-                    source.createSection(i, 1), tape, -1
-                ));
-                case '+' -> groupNodeStack.getLast().children.add(new WutlangChangeCellNode(
-                    source.createSection(i, 1), tape, 1
-                ));
-                case '-' -> groupNodeStack.getLast().children.add(new WutlangChangeCellNode(
-                    source.createSection(i, 1), tape, -1
-                ));
-                case '.' -> groupNodeStack.getLast().children.add(new WutlangPrintCellNode(
-                    source.createSection(i, 1), tape
-                ));
-                case ',' -> groupNodeStack.getLast().children.add(new WutlangReadCellNode(
-                    source.createSection(i, 1), tape
-                ));
-                // push onto stack
-                case '[' -> groupNodeStack.addLast(new ProtoGroupNode(
-                    i, new ArrayList<>()
-                ));
-                // pop off stack, add new loop node
-                case ']' -> {
-                    var loopBody = groupNodeStack.removeLast();
-                    if (groupNodeStack.isEmpty()) {
-                        throw new IllegalStateException("Missing '[' bracket");
-                    }
-                    var loopSourceSection = source.createSection(
-                        loopBody.start, i - loopBody.start + 1
-                    );
-                    var loopBodySourceSection = source.createSection(
-                        loopBody.start + 1, Math.max(i - loopBody.start - 1, 0)
-                    );
-                    var groupNode = new WutlangGroupNode(
-                        loopBodySourceSection,
-                        false,
-                        new WutlangOptimizer(source, tape, loopBody.children).optimize()
-                    );
-                    DirectCallNode loopBodyNode = Truffle.getRuntime().createDirectCallNode(
-                        Truffle.getRuntime().createCallTarget(
-                            new WutlangRootNode(
-                                language,
-                                frameDescriptor,
-                                tape,
-                                groupNode,
-                                false
-                            )
-                        )
-                    );
-                    groupNodeStack.getLast().children.add(
-                        new WutlangLoopNode(loopSourceSection, tape, loopBodyNode)
-                    );
-                }
-                default -> {
-                    // unknown characters are skipped
+        for (var line : lines) {
+            for (int i = 0; i < line.length(); i++) {
+                if (!handleChar(frameDescriptor, tape, groupNodeStack, line, i)) {
+                    break;
                 }
             }
         }
@@ -136,6 +82,84 @@ public class WutlangParser {
             throw new IllegalStateException("Missing ']' bracket");
         }
         return rootNode;
+    }
+
+    private boolean handleChar(FrameDescriptor frameDescriptor, InfiniteTape tape,
+                               ArrayDeque<ProtoGroupNode> groupNodeStack, String line, int i) {
+        char c = line.charAt(i);
+        switch (c) {
+            case '>' -> groupNodeStack.getLast().children.add(new WutlangMoveDataPointerNode(
+                source.createSection(i, 1), tape, 1
+            ));
+            case '<' -> groupNodeStack.getLast().children.add(new WutlangMoveDataPointerNode(
+                source.createSection(i, 1), tape, -1
+            ));
+            case '+' -> groupNodeStack.getLast().children.add(new WutlangChangeCellNode(
+                source.createSection(i, 1), tape, 1
+            ));
+            case '-' -> groupNodeStack.getLast().children.add(new WutlangChangeCellNode(
+                source.createSection(i, 1), tape, -1
+            ));
+            case '.' -> groupNodeStack.getLast().children.add(new WutlangPrintCellNode(
+                source.createSection(i, 1), tape
+            ));
+            case ',' -> groupNodeStack.getLast().children.add(new WutlangReadCellNode(
+                source.createSection(i, 1), tape
+            ));
+            // push onto stack
+            case '[' -> groupNodeStack.addLast(new ProtoGroupNode(
+                i, new ArrayList<>()
+            ));
+            // pop off stack, add new loop node
+            case ']' -> {
+                var loopBody = groupNodeStack.removeLast();
+                if (groupNodeStack.isEmpty()) {
+                    throw new IllegalStateException("Missing '[' bracket");
+                }
+                var loopSourceSection = source.createSection(
+                    loopBody.start, i - loopBody.start + 1
+                );
+                var loopBodySourceSection = source.createSection(
+                    loopBody.start + 1, Math.max(i - loopBody.start - 1, 0)
+                );
+                var groupNode = new WutlangGroupNode(
+                    loopBodySourceSection,
+                    false,
+                    new WutlangOptimizer(source, tape, loopBody.children).optimize()
+                );
+                DirectCallNode loopBodyNode = Truffle.getRuntime().createDirectCallNode(
+                    Truffle.getRuntime().createCallTarget(
+                        new WutlangRootNode(
+                            language,
+                            frameDescriptor,
+                            tape,
+                            groupNode,
+                            false
+                        )
+                    )
+                );
+                groupNodeStack.getLast().children.add(
+                    new WutlangLoopNode(loopSourceSection, tape, loopBodyNode)
+                );
+            }
+            case '#' -> {
+                // Comment, eat to end of line
+                return false;
+            }
+            case ' ' -> {
+                // ignored
+            }
+            default -> throw new IllegalStateException("Unknown character outside of comment: " + ensurePrintable(c));
+        }
+        return true;
+    }
+
+    private String ensurePrintable(char c) {
+        Character.UnicodeBlock block = Character.UnicodeBlock.of(c);
+        boolean printable = !(Character.isISOControl(c) || Character.isWhitespace(c))
+            && block != null
+            && block != Character.UnicodeBlock.SPECIALS;
+        return printable ? String.valueOf(c) : "\\u%04x".formatted((int) c);
     }
 
 }
